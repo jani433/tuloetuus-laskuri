@@ -1,4 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
 import { Briefcase, GraduationCap, Home, ShieldCheck } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StudentTab } from "@/components/calc/StudentTab";
@@ -14,7 +15,9 @@ const DESCRIPTION =
   "Helppo suomalainen laskuri vuoden 2026 tulorajoille. Katso heti, paljonko voit tienata sivutuloja ennen kuin opintotuki, yleistuki tai asumistuki pienenee.";
 
 export const Route = createFileRoute("/")({
-  validateSearch: (search: Record<string, unknown>) => validateCalculatorState(search["data"]),
+  // Keep only the raw snapshot in the URL; validity is derived, never written back.
+  validateSearch: (search: Record<string, unknown>): { data?: unknown } =>
+    "data" in search ? { data: search["data"] } : {},
   head: () => ({
     meta: [
       { title: TITLE },
@@ -45,14 +48,32 @@ const TABS = [
 
 function Index() {
   const search = Route.useSearch();
+  const navigate = useNavigate();
+  const key = "data" in search ? JSON.stringify(search.data ?? null) : "";
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const result = useMemo(
+    () =>
+      "data" in search
+        ? validateCalculatorState(search.data ?? null)
+        : { data: null, invalid: false },
+    [key],
+  );
+  const [invalid, setInvalid] = useState(false);
+  useEffect(() => {
+    if (result.invalid) {
+      setInvalid(true);
+      // Remove the broken snapshot from the address bar right away.
+      void navigate({ to: "/", search: {}, replace: true });
+    }
+  }, [result, navigate]);
   return (
-    <CalculatorProvider initial={search.data}>
-      <CalculatorPage invalid={search.invalid} />
+    <CalculatorProvider initial={result.data}>
+      <CalculatorPage invalid={invalid} onDismiss={() => setInvalid(false)} />
     </CalculatorProvider>
   );
 }
 
-function CalculatorPage({ invalid }: { invalid: boolean }) {
+function CalculatorPage({ invalid, onDismiss }: { invalid: boolean; onDismiss: () => void }) {
   const { state, update } = useCalculator();
   return (
     <div className="min-h-screen bg-background">
@@ -84,7 +105,16 @@ function CalculatorPage({ invalid }: { invalid: boolean }) {
             role="alert"
             className="mb-5 rounded-xl bg-warning-soft p-4 text-sm text-warning-foreground"
           >
-            Jakolinkin tiedot ovat virheellisiä. Niitä ei käytetty; laskuri näyttää oletusarvot.
+            <span className="block font-bold">Jakolinkki oli virheellinen tai vanhentunut.</span>
+            Sen tietoja ei käytetty, ja virheelliset tiedot poistettiin osoitteesta. Laskuri näyttää
+            oletusarvot.
+            <button
+              type="button"
+              onClick={onDismiss}
+              className="mt-2 block font-bold underline underline-offset-2"
+            >
+              Jatka puhtaalla laskurilla
+            </button>
           </p>
         )}
         <Tabs
