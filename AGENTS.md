@@ -28,3 +28,7 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+## Project rules
+- All benefit calculations live as pure functions in `src/lib/calc.ts` with tests in `src/test/calc.test.ts`; UI components only render results, so rule changes happen in one tested place.
+- No backend: everything runs client-side in the browser, because the app stores no user data.
