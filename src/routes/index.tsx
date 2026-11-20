@@ -5,10 +5,11 @@ import { StudentTab } from "@/components/calc/StudentTab";
 import { GeneralSupportTab } from "@/components/calc/GeneralSupportTab";
 import { HousingTab } from "@/components/calc/HousingTab";
 import { ToolCards } from "@/components/calc/ToolCards";
+import { Faq } from "@/components/calc/Faq";
 
-const TITLE = "Sivutulo & Tuet -laskuri 2026";
+const TITLE = "Sivutulo & Tuet -laskuri 2026 – Laske opintotuen ja yleistuen tulorajat";
 const DESCRIPTION =
-  "Arvioi nopeasti, miten keikkatyö, freelance tai alustatyö vaikuttaa opintotukeen, yleistukeen ja asumistukeen vuonna 2026.";
+  "Helppo suomalainen laskuri vuoden 2026 tulorajoille. Katso heti, paljonko voit tienata sivutuloja ennen kuin opintotuki, yleistuki tai asumistuki pienenee.";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -18,8 +19,13 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: TITLE },
       { property: "og:description", content: DESCRIPTION },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: "/" },
+      { property: "og:locale", content: "fi_FI" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: TITLE },
+      { name: "twitter:description", content: DESCRIPTION },
     ],
+    links: [{ rel: "canonical", href: "/" }],
   }),
   component: Index,
 });
@@ -82,6 +88,8 @@ function Index() {
             <HousingTab />
           </TabsContent>
         </Tabs>
+
+        <Faq />
 
         <ToolCards />
 
