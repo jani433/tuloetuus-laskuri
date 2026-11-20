@@ -1,139 +1,229 @@
-import { useState } from "react";
-import { Info, TrendingUp } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
-import { GENERAL_SUPPORT_DAILY, GENERAL_SUPPORT_DEFAULT_MONTHLY, calcGeneralSupport } from "@/lib/calc";
+import { calcGeneralSupport, GENERAL_SUPPORT_DEFAULT_MONTHLY } from "@/lib/calc";
 import { euro, euroCents, signedEuro } from "@/lib/format";
-import { Callout, CopyLinkButton, NumberField, Panel, PanelTitle, SliderHeader, Stat } from "./parts";
-
+import type { IncomeType } from "@/lib/calculator-state";
+import { useCalculator } from "./CalculatorContext";
+import {
+  Callout,
+  CopyLinkButton,
+  EstimateNotice,
+  MissingResult,
+  NumberField,
+  Panel,
+  PanelTitle,
+  SliderHeader,
+  Stat,
+} from "./parts";
+const TYPES: { value: IncomeType; label: string }[] = [
+  { value: "none", label: "Ei muita tuloja" },
+  { value: "wage", label: "Palkkatulo" },
+  { value: "capital", label: "Pääomatulo" },
+  { value: "rent", label: "Vuokratulo" },
+  { value: "other", label: "Muu kuin palkkatulo" },
+  { value: "mixed", label: "Useita tulolajeja" },
+];
 export function GeneralSupportTab() {
-  const [support, setSupport] = useState(GENERAL_SUPPORT_DEFAULT_MONTHLY);
-  const [income, setIncome] = useState(600);
-  const r = calcGeneralSupport(support, income);
-
-  const max = Math.max(r.total, support, 1);
-  const supportPct = (r.adjustedSupport / max) * 100;
-  const incomePct = (income / max) * 100;
-  const basePct = (support / max) * 100;
-
+  const { state, update } = useCalculator();
+  const s = state.general;
+  const set = (patch: Partial<typeof s>) => update("general", { ...s, ...patch });
+  const r = calcGeneralSupport(s);
+  const fields = [
+    { key: "wages", label: "Palkkatulo / kk (brutto)", type: "wage" },
+    { key: "capital", label: "Pääomatulo / kk", type: "capital" },
+    { key: "rent", label: "Vuokratulo / kk (vähennettävien kulujen jälkeen)", type: "rent" },
+    { key: "other", label: "Muu tarveharkintatulo / kk", type: "other" },
+  ] as const;
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_1.15fr]">
       <Panel>
         <PanelTitle step="1">Sinun tilanteesi</PanelTitle>
-        <div className="space-y-7">
+        <div className="space-y-6">
           <NumberField
-            label="Nykyinen yleistuki / kk"
-            value={support}
-            onChange={setSupport}
-            hint={`Täysi yleistuki ${euroCents(GENERAL_SUPPORT_DAILY)}/pv ≈ ${euro(GENERAL_SUPPORT_DEFAULT_MONTHLY)}/kk.`}
+            label="Yleistuki ennen tulovähennyksiä / kk"
+            value={s.support}
+            max={GENERAL_SUPPORT_DEFAULT_MONTHLY}
+            onChange={(support) => set({ support })}
+            hint="Täysi tuki 37,21 €/pv, keskimäärin 800,02 €/kk (21,5 päivää). Keskimääräinen kuukausiarvio, ei neljän viikon maksuerä."
           />
           <div>
-            <SliderHeader label="Sivutulo / kk (brutto)" value={euro(income)} />
-            <Slider
-              min={0}
-              max={2000}
-              step={10}
-              value={[income]}
-              onValueChange={(v) => setIncome(v[0] ?? 0)}
-              aria-label="Sivutulo kuukaudessa"
+            <label htmlFor="income-type" className="mb-2 block text-sm font-semibold">
+              Tulolaji
+            </label>
+            <select
+              id="income-type"
+              value={s.type}
+              onChange={(e) => {
+                const type = TYPES.find((t) => t.value === e.target.value)?.value;
+                if (type) set({ type, wages: 0, capital: 0, rent: 0, other: 0 });
+              }}
+              className="w-full rounded-xl border border-input bg-background px-4 py-3 text-foreground"
+            >
+              {TYPES.map((t) => (
+                <option key={t.value} value={t.value}>
+                  {t.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          {fields
+            .filter((f) => s.type === "mixed" || s.type === f.type)
+            .map((f) => (
+              <div key={f.key}>
+                <NumberField
+                  label={f.label}
+                  value={s[f.key]}
+                  onChange={(v) => set({ [f.key]: v })}
+                />
+                {f.key === "wages" && (
+                  <div className="mt-3 print:hidden">
+                    <SliderHeader label="Palkkatulo" value={euro(s.wages ?? 0)} />
+                    <Slider
+                      min={0}
+                      max={2000}
+                      step={10}
+                      value={[Math.min(s.wages ?? 0, 2000)]}
+                      onValueChange={(v) => set({ wages: v[0] ?? 0 })}
+                      aria-label="Sivutulo kuukaudessa"
+                    />
+                  </div>
+                )}
+              </div>
+            ))}
+          <NumberField
+            label="Suoraan vähennettävät muut etuudet / kk"
+            value={s.benefits}
+            onChange={(benefits) => set({ benefits })}
+            hint="Vain Kelan suoraan vähennettäväksi vahvistamat etuudet, esimerkiksi kotihoidon tuki. Älä lisää asumistukea, lapsilisää, elatustukea, toimeentulotukea tai vammaistukea."
+          />
+          <label className="flex items-start gap-3 text-sm">
+            <input
+              type="checkbox"
+              checked={s.special}
+              onChange={(e) => set({ special: e.target.checked })}
+              className="mt-1"
             />
-            <div className="mt-1 flex justify-between text-xs text-muted-foreground">
-              <span>0 €</span>
-              <span>2 000 €</span>
-            </div>
-          </div>
-          <div className="rounded-xl bg-muted p-4 text-sm text-muted-foreground">
-            <div className="mb-1 font-semibold text-foreground">Näin tuki sovitellaan</div>
-            Yleistuessa ei ole suojaosaa: jokainen tienattu bruttoeuro pienentää tukea{" "}
-            <b className="text-foreground">50 senttiä</b>.
-            <br />
-            {euro(support)} − 0,5 × {euro(income)} ={" "}
-            <b className="text-foreground">{euro(r.adjustedSupport)}</b>
-          </div>
-        </div>
-      </Panel>
-
-      <Panel className="animate-rise">
-        <PanelTitle step="2">Tulos</PanelTitle>
-
-        <div className="rounded-2xl bg-hero p-5 text-primary-foreground shadow-raised">
-          <Stat
-            label="Paljonko jäät oikeasti plussalle"
-            value={signedEuro(r.gain)}
-            tone="inverse"
-            size="xl"
-            hint={`kuukaudessa verrattuna tilanteeseen ilman sivutuloa`}
-          />
-        </div>
-
-        <div className="mt-5 grid grid-cols-2 gap-3">
-          <div className="rounded-xl bg-muted p-4">
-            <Stat label="Soviteltu tuki" value={euro(r.adjustedSupport)} hint={`−${euro(r.reduction)}`} />
-          </div>
-          <div className="rounded-xl bg-accent p-4">
-            <Stat label="Tulot yhteensä" value={euro(r.total)} tone="success" hint="/ kk brutto" />
-          </div>
-        </div>
-
-        <div className="mt-6 space-y-3">
-          <div>
-            <div className="mb-1.5 flex justify-between text-xs font-semibold text-muted-foreground">
-              <span>Ilman sivutuloa</span>
-              <span className="text-foreground">{euro(support)}</span>
-            </div>
-            <div className="h-7 overflow-hidden rounded-lg bg-secondary">
-              <div
-                className="h-full rounded-lg bg-primary/25 transition-[width] duration-500"
-                style={{ width: `${basePct}%` }}
-              />
-            </div>
-          </div>
-          <div>
-            <div className="mb-1.5 flex justify-between text-xs font-semibold text-muted-foreground">
-              <span>Sivutulon kanssa</span>
-              <span className="text-foreground">{euro(r.total)}</span>
-            </div>
-            <div className="flex h-7 overflow-hidden rounded-lg bg-secondary">
-              <div
-                className="h-full bg-primary transition-[width] duration-500"
-                style={{ width: `${supportPct}%` }}
-              />
-              <div
-                className="h-full bg-success transition-[width] duration-500"
-                style={{ width: `${incomePct}%` }}
-              />
-            </div>
-            <div className="mt-2 flex gap-4 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1.5">
-                <i className="h-2.5 w-2.5 rounded-sm bg-primary" /> Yleistuki
-              </span>
-              <span className="flex items-center gap-1.5">
-                <i className="h-2.5 w-2.5 rounded-sm bg-success" /> Sivutulo
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-5 space-y-3">
-          <Callout tone="success" icon={<TrendingUp className="h-5 w-5" />}>
-            {r.adjustedSupport > 0 ? (
-              <>
-                Jokaisesta tienatusta eurosta jää käteesi <b>50 senttiä</b> ennen veroja. Työnteko
-                kannattaa aina.
-              </>
-            ) : (
-              <>
-                Sivutulosi on niin suuri, että yleistukea ei makseta tältä kuulta. Jokainen
-                lisäeuro on nyt kokonaan sinun.
-              </>
-            )}
-          </Callout>
-          <p className="flex items-start gap-2 text-xs text-muted-foreground">
-            <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-            Summat ovat bruttoja ennen veroja. Soviteltu tuki maksetaan jälkikäteen
-            palkkatietojen perusteella.
+            Erityistilanne: asun vanhempien luona, osallistun työllistymistä edistävään palveluun,
+            saan eläkettä tai etuuden vaikutus on epäselvä
+          </label>
+          <p className="text-xs text-muted-foreground">
+            Yleistuki on voimassa 1.5.2026 alkaen. Palkka sovitellaan maksujakson mukaan.
+            Säännölliset pääoma- ja muut tarveharkintatulot arvioidaan kuukausituloiksi,
+            tarvittaessa vuosimäärä / 12. Yritystoiminnan ja työajan vaikutus oikeuteen on
+            tarkistettava erikseen.
           </p>
         </div>
-
+      </Panel>
+      <Panel>
+        <PanelTitle step="2">Tulos</PanelTitle>
+        {!r ? (
+          s.special ? (
+            <Callout tone="warning">
+              Erityistilanne vaatii Kelan arvion. Vanhempien tulot, palvelujaksot ja etuuksien tai
+              eläkkeen laji voivat muuttaa sääntöjä. Näillä tiedoilla ei anneta euromäärää.
+            </Callout>
+          ) : (
+            <MissingResult />
+          )
+        ) : (
+          <div className="space-y-5">
+            <div className="rounded-2xl bg-hero p-5 text-primary-foreground shadow-raised">
+              <Stat
+                label="Arvioitu yleistuki kuukaudessa"
+                value={euroCents(r.adjustedSupport)}
+                size="xl"
+                tone="inverse"
+                hint="Brutto, keskimääräinen kuukausi"
+              />
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Stat label="Tulot yhteensä" value={euroCents(r.total)} tone="success" />
+              <Stat
+                label="Lisätulojen hyöty ennen veroja"
+                value={signedEuro(r.gain)}
+                hint="Verrattuna tilanteeseen ilman palkka- ja tarveharkintatuloja, muut etuudet ennallaan."
+              />
+            </div>
+            <div className="space-y-3">
+              <div>
+                <div className="mb-1 flex justify-between gap-3 text-xs text-muted-foreground">
+                  <span>Ilman lisätuloja (muut etuudet ennallaan)</span>
+                  <span>{euroCents(s.support ?? 0)}</span>
+                </div>
+                <div className="h-7 overflow-hidden rounded-lg bg-secondary">
+                  <div
+                    className="h-full bg-primary/25"
+                    style={{
+                      width: `${((s.support ?? 0) / Math.max(r.total, s.support ?? 0, 1)) * 100}%`,
+                    }}
+                  />
+                </div>
+              </div>
+              <div>
+                <div className="mb-1 flex justify-between text-xs text-muted-foreground">
+                  <span>Lisätulojen kanssa</span>
+                  <span>{euroCents(r.total)}</span>
+                </div>
+                <div className="flex h-7 overflow-hidden rounded-lg bg-secondary">
+                  <div
+                    className="h-full bg-primary"
+                    style={{
+                      width: `${(r.adjustedSupport / Math.max(r.total, s.support ?? 0, 1)) * 100}%`,
+                    }}
+                  />
+                  <div
+                    className="h-full bg-success"
+                    style={{
+                      width: `${((r.total - r.adjustedSupport) / Math.max(r.total, s.support ?? 0, 1)) * 100}%`,
+                    }}
+                  />
+                </div>
+                <div className="mt-2 flex gap-4 text-xs text-muted-foreground">
+                  <span>Yleistuki</span>
+                  <span>Muut tulot ja etuudet</span>
+                </div>
+              </div>
+            </div>
+            <dl className="space-y-3 text-sm">
+              <div className="flex justify-between gap-3">
+                <dt>Palkkatulon vähennys (50 %)</dt>
+                <dd>{euroCents(r.wageReduction)}</dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt>Tarveharkintatulot yhteensä</dt>
+                <dd>{euroCents(r.meansIncome)}</dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt>Tarveharkinnan tuloraja</dt>
+                <dd>{euro(r.usedLimit)}/kk</dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt>Tarveharkinnan vähennys</dt>
+                <dd>{euroCents(r.meansReduction)}</dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt>Muiden etuuksien suora vähennys</dt>
+                <dd>{euroCents(r.benefitReduction)}</dd>
+              </div>
+              <div className="flex justify-between gap-3 font-bold">
+                <dt>Tuen vähennys yhteensä (enintään tuen määrä)</dt>
+                <dd>{euroCents(r.reduction)}</dd>
+              </div>
+            </dl>
+            <Callout>
+              Arvio = {euroCents(s.support ?? 0)} − {euroCents(r.wageReduction)} −{" "}
+              {euroCents(r.meansReduction)} − {euroCents(r.benefitReduction)}, vähintään 0 €.
+              Palkalla ei ole suojaosaa. Muiden tarveharkintatulojen yhteenlasketusta 311 €/kk
+              ylittävästä osasta vähennetään 50 %.
+            </Callout>
+            <p className="text-xs text-muted-foreground">
+              Ei yleistä 35 %:n vähimmäistukea: se liittyy vain vanhempien tulojen erityissääntöön.
+              Julkisista Kelan ohjeista ei varmistettu yleistä pienen maksun alarajaa. Maksupäivät,
+              työaika, tarveharkinnan kohdistus ja yhteisvähennysten pyöristys vaativat Kelan
+              päätöksen.
+            </p>
+          </div>
+        )}
+        <EstimateNotice source="https://www.kela.fi/yleistuki" />
         <CopyLinkButton />
       </Panel>
     </div>

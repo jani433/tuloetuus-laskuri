@@ -32,3 +32,5 @@ use the editor.
 ## Project rules
 - All benefit calculations live as pure functions in `src/lib/calc.ts` with tests in `src/test/calc.test.ts`; UI components only render results, so rule changes happen in one tested place.
 - No backend: everything runs client-side in the browser, because the app stores no user data.
+- Keep calculator inputs in a shared React context and validate versioned URL snapshots against a strict allowlist; sharing must reproduce all calculator inputs without storing user data.
+- Use nullable numeric inputs and suppress estimates on invalid, missing or unsupported data; never silently coerce missing financial information to zero.

@@ -1,64 +1,82 @@
-import { useState } from "react";
-import { AlertTriangle, CalendarClock, CheckCircle2, Info } from "lucide-react";
+import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
+import { MONTHS_FI, calcStudentAssessment } from "@/lib/calc";
+import { euro, euroCents, signedEuro } from "@/lib/format";
+import { useCalculator } from "./CalculatorContext";
 import {
-  MONTHS_FI,
-  STUDENT_LIMIT_FREE_MONTH,
-  STUDENT_LIMIT_SUPPORT_MONTH,
-  STUDENT_MARGIN,
-  calcStudent,
-} from "@/lib/calc";
-import { euro, num } from "@/lib/format";
-import { cn } from "@/lib/utils";
-import { Callout, CopyLinkButton, NumberField, Panel, PanelTitle, SliderHeader, Stat } from "./parts";
+  Callout,
+  CopyLinkButton,
+  EstimateNotice,
+  MissingResult,
+  NumberField,
+  Panel,
+  PanelTitle,
+  SliderHeader,
+  Stat,
+} from "./parts";
 
 export function StudentTab() {
-  const [months, setMonths] = useState(9);
-  const [income, setIncome] = useState(12000);
-  const [currentMonth, setCurrentMonth] = useState(() => new Date().getMonth() + 1);
-  const r = calcStudent(months, income, currentMonth);
-
-  const pct = Math.min(100, r.usage * 100);
-  const limitMarkPct = (r.limit / r.limitWithMargin) * 100;
-
+  const { state, update } = useCalculator();
+  const s = state.student;
+  const set = (patch: Partial<typeof s>) => update("student", { ...s, ...patch });
+  const r = calcStudentAssessment(s);
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_1.15fr]">
       <Panel>
         <PanelTitle step="1">Sinun tilanteesi</PanelTitle>
-        <div className="space-y-7">
+        <div className="space-y-6">
           <div>
-            <SliderHeader label="Tukikuukaudet vuonna 2026" value={`${months} kk`} />
+            <SliderHeader label="Tukikuukaudet vuonna 2026" value={`${s.months ?? "–"} kk`} />
             <Slider
-              min={1}
+              min={0}
               max={12}
               step={1}
-              value={[months]}
-              onValueChange={(v) => setMonths(v[0] ?? 9)}
+              value={[s.months ?? 9]}
+              onValueChange={(v) => set({ months: v[0] ?? 9 })}
               aria-label="Tukikuukaudet"
             />
             <div className="mt-1 flex justify-between text-xs text-muted-foreground">
-              <span>1 kk</span>
+              <span>0 kk</span>
               <span>12 kk</span>
             </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Laske mukaan kuukaudet, joina saat opintorahaa tai asumislisää. Pelkkä opintolaina ei
+              ole tukikuukausi.
+            </p>
           </div>
           <NumberField
-            label="Arvioitu koko vuoden bruttotulo"
-            value={income}
-            onChange={setIncome}
-            hint="Kaikki vuoden 2026 veronalaiset tulot yhteensä (palkka, keikat, freelance)."
+            label="Opiskelukuukaudet vuonna 2026"
+            value={s.studyMonths}
+            onChange={(studyMonths) => set({ studyMonths })}
+            max={12}
+            integer
+            suffix="kk"
+          />
+          {s.months !== null && s.studyMonths !== null && s.months > s.studyMonths && (
+            <p role="alert" className="text-sm text-destructive">
+              Tukikuukausia ei voi olla opiskelukuukausia enemmän.
+            </p>
+          )}
+          <NumberField
+            label="Toteutuneet veronalaiset tulot"
+            value={s.earned}
+            onChange={(earned) => set({ earned })}
+            hint="Vuonna 2026 jo maksetut omat bruttopalkat, veronalaiset pääomatulot ja ulkomaiset tulot. Ei opintorahaa, asumislisää tai opintolainaa."
+          />
+          <NumberField
+            label="Arvioidut tulevat tulot vuonna 2026"
+            value={s.future}
+            onChange={(future) => set({ future })}
           />
           <div>
-            <label
-              htmlFor="current-month"
-              className="mb-2 block text-sm font-semibold text-foreground"
-            >
+            <label htmlFor="current-month" className="mb-2 block text-sm font-semibold">
               Kuluva kuukausi
             </label>
             <select
               id="current-month"
-              value={currentMonth}
-              onChange={(e) => setCurrentMonth(Number(e.target.value))}
-              className="w-full rounded-xl border border-input bg-background px-4 py-3 text-base font-medium capitalize text-foreground outline-none focus:border-ring focus:ring-4 focus:ring-ring/15"
+              value={s.currentMonth}
+              onChange={(e) => set({ currentMonth: Number(e.target.value) })}
+              className="w-full rounded-xl border border-input bg-background px-4 py-3 text-foreground"
             >
               {MONTHS_FI.map((m, i) => (
                 <option key={m} value={i + 1}>
@@ -67,105 +85,120 @@ export function StudentTab() {
               ))}
             </select>
           </div>
-
+          <label className="flex items-start gap-3 text-sm">
+            <input
+              type="checkbox"
+              checked={s.partialYear}
+              onChange={(e) => set({ partialYear: e.target.checked })}
+              className="mt-1"
+            />
+            Aloitan opinnot, valmistun tai käytän enimmäistukiajan loppuun vuonna 2026
+          </label>
+          {s.partialYear && (
+            <>
+              <NumberField
+                label="Opiskeluajan veronalaiset tulot yhteensä"
+                value={s.studyIncome}
+                onChange={(studyIncome) => set({ studyIncome })}
+              />
+              <p className="text-xs text-muted-foreground">
+                Opiskeluaika määräytyy Kelan sääntöjen mukaan, ei vain nostettujen tukikuukausien
+                mukaan. Tavallinen kesätauko tai tuen keskeyttäminen ei oikeuta poikkeukseen. Tulot
+                eivät saa ylittää koko vuoden tuloja.
+              </p>
+            </>
+          )}
           <div className="rounded-xl bg-muted p-4 text-sm text-muted-foreground">
-            <div className="mb-1 font-semibold text-foreground">Näin raja lasketaan</div>
-            {months} × {num(STUDENT_LIMIT_SUPPORT_MONTH)} € + {12 - months} ×{" "}
-            {num(STUDENT_LIMIT_FREE_MONTH)} € = <b className="text-foreground">{euro(r.limit)}</b>
-            <br />+ ylitysvara {num(STUDENT_MARGIN)} € ={" "}
-            <b className="text-foreground">{euro(r.limitWithMargin)}</b>
+            Vuosituloraja = tukikuukaudet × 1 118 € + tuettomat kuukaudet × 3 355 €. Sallittu ylitys
+            on 374 €. Tulot huomioidaan pääosin maksuvuoden mukaan; esimerkiksi luovutusvoitot ja
+            yritystulot vaativat erillistä ajankohdan tarkistusta.
           </div>
         </div>
       </Panel>
-
-      <Panel className="animate-rise">
+      <Panel>
         <PanelTitle step="2">Tulos</PanelTitle>
-
-        <Stat
-          label={r.overLimit ? "Raja ylittyy" : "Tulorajaa jäljellä"}
-          value={r.overLimit ? euro(-r.remaining) : euro(r.remaining)}
-          tone={r.overLimit ? "danger" : "success"}
-          size="xl"
-          hint={
-            <>
-              Vuosituloraja ylitysvaroineen <b className="text-foreground">{euro(r.limitWithMargin)}</b>
-            </>
-          }
-        />
-
-        <div className="mt-6">
-          <div className="relative h-4 overflow-hidden rounded-full bg-secondary">
-            <div
-              className={cn(
-                "h-full rounded-full transition-[width] duration-500",
-                r.overLimit ? "bg-destructive" : pct > limitMarkPct ? "bg-warning" : "bg-meter",
-              )}
-              style={{ width: `${pct}%` }}
-            />
-            <div
-              className="absolute inset-y-0 w-0.5 bg-primary/40"
-              style={{ left: `${limitMarkPct}%` }}
-              aria-hidden
-            />
-          </div>
-          <div className="mt-2 flex justify-between text-xs text-muted-foreground">
-            <span>{Math.round(r.usage * 100)} % käytetty</span>
-            <span>Ylitysvara alkaa {euro(r.limit)}</span>
-          </div>
-        </div>
-
-        <div className="mt-6 grid grid-cols-2 gap-3">
-          <div className="rounded-xl bg-muted p-4">
+        {!r ? (
+          <MissingResult />
+        ) : (
+          <div className="space-y-5">
             <Stat
-              label="Turvallinen keskiarvo"
-              value={euro(r.safeMonthly)}
-              hint="/ kk koko vuoden"
-            />
-          </div>
-          <div className="rounded-xl bg-accent p-4">
-            <Stat
-              label="Suositus loppuvuodelle"
-              value={euro(r.recommendedMonthly)}
+              label={
+                r.noAid ? "Ei takaisinperittävää opintotukea" : "Henkilökohtainen vuosituloraja"
+              }
+              value={r.noAid ? "0 kk" : euro(r.limit)}
+              size="xl"
               tone="success"
-              hint={`/ kk, ${r.remainingMonths} kk jäljellä`}
+              hint={
+                r.noAid
+                  ? "Ei opintotuen tulovalvontaa ilman tukikuukausia. Muilla etuuksilla voi olla tulorajoja."
+                  : `Sallittu ylitys huomioiden ${euro(r.limitWithMargin)}`
+              }
             />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Stat label="Arvioitu vuositulo" value={euroCents(r.annualIncome)} />
+              <Stat
+                label="Alitus / ylitys vuosirajaan"
+                value={r.noAid ? "Ei sovelleta" : signedEuro(r.annualIncome - r.limit)}
+                tone={r.overLimit ? "danger" : "success"}
+              />
+            </div>
+            {!r.noAid && (
+              <>
+                <div
+                  className="h-4 overflow-hidden rounded-full bg-secondary"
+                  role="meter"
+                  aria-label="Vuositulorajan käyttö"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={Math.min(100, Math.round(r.usage * 100))}
+                >
+                  <div
+                    className={`h-full ${r.overLimit ? "bg-destructive" : "bg-meter"}`}
+                    style={{ width: `${Math.min(100, r.usage * 100)}%` }}
+                  />
+                </div>
+                <Stat
+                  label="Mahdollisesti takaisinperittäviä tukikuukausia"
+                  value={
+                    r.recoveredMonths === null ? "Ei määritettävissä" : `${r.recoveredMonths} kk`
+                  }
+                  tone={r.overLimit ? "danger" : "success"}
+                />
+                {r.recommendedMonthly !== null && (
+                  <Stat
+                    label="Tilaa tuleville tuloille"
+                    value={euro(Math.max(0, r.limitWithMargin - (s.earned ?? 0)))}
+                    hint={`Enintään ${euro(r.recommendedMonthly)}/kk, ${r.remainingMonths} kk jäljellä nykyinen kuukausi mukaan lukien. Ei oletusta tasaisesta tulokertymästä.`}
+                  />
+                )}
+                <Callout
+                  tone={r.overLimit ? "warning" : "success"}
+                  icon={
+                    r.overLimit ? (
+                      <AlertTriangle className="h-5 w-5" />
+                    ) : (
+                      <CheckCircle2 className="h-5 w-5" />
+                    )
+                  }
+                >
+                  {r.uncertainRecovery
+                    ? "Vuosituloraja ja opiskeluajan raja ylittyvät. Takaisinperinnän määrä vaatii Kelan erillisen opiskeluajan tuloselvityksen; euromäärää tai kuukausia ei arvioida."
+                    : r.exceptionFits
+                      ? `Opiskeluajan tulot mahtuvat rajaan ${euro(r.studyLimit)}. Opintojen aloitus-/päättymisajankohta ja tulot on tarvittaessa osoitettava Kelalle.`
+                      : r.overLimit
+                        ? `Ylitys ${euroCents(r.overage)} kuuluu Kelan takaisinperintätaulukkoon (2 237 €:n rajat, ensimmäinen raja 374,01 €). Takaisinperintään lisätään 7,5 %. Vapaaehtoista palautusta tarvitaan arviolta ${r.voluntaryMonths} kk; palauta koko kuukauden opintoraha ja asumislisä viimeistään 30.4.2027.`
+                        : `Tulot eivät ylitä vuositulorajaa yli 374 eurolla. Tulotilaa on ${euroCents(r.remaining)} sallittu ylitys huomioiden.`}
+                </Callout>
+                <p className="text-xs text-muted-foreground">
+                  Takaisinperinnän euromäärää ei lasketa ilman maksettujen tukikuukausien
+                  opintoraha- ja asumislisämääriä. Kela perii viimeisistä maksetuista kuukausista
+                  alkaen.
+                </p>
+              </>
+            )}
           </div>
-        </div>
-
-        <div className="mt-5 space-y-3">
-          {r.overLimit ? (
-            <>
-              <Callout
-                tone="danger"
-                icon={<AlertTriangle className="h-5 w-5" />}
-                title={`Raja ylittyy arviolta ${r.exceedMonth ? MONTHS_FI[r.exceedMonth - 1] + "ssa" : "loppuvuonna"}`}
-              >
-                Ylitys on {euro(r.overage)} vuosirajaan nähden. Kela voi periä takaisin arviolta{" "}
-                {r.recoveredMonths} tukikuukautta, ja takaisinperittävään tukeen lisätään{" "}
-                <b>7,5 % korotus</b>. Voit välttää korotuksen perumalla tukikuukausia tai
-                palauttamalla tukea vapaaehtoisesti.
-              </Callout>
-            </>
-          ) : (
-            <Callout
-              tone="success"
-              icon={<CheckCircle2 className="h-5 w-5" />}
-              title="Pysyt tulorajan sisällä"
-            >
-              Voit tienata vielä {euro(r.remaining)} vuonna 2026 ilman takaisinperintää.
-            </Callout>
-          )}
-          <Callout tone="info" icon={<CalendarClock className="h-5 w-5" />}>
-            Laskelma olettaa, että tulot kertyvät tasaisesti koko vuoden. Tukikuukausia voi perua
-            tai siirtää OmaKelassa.
-          </Callout>
-          <p className="flex items-start gap-2 text-xs text-muted-foreground">
-            <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-            Opintotuen tulorajaan lasketaan veronalaiset tulot, myös apurahat. Opintolainaa ja
-            asumislisää ei lasketa tuloksi.
-          </p>
-        </div>
-
+        )}
+        <EstimateNotice source="https://www.kela.fi/opintotuki-omat-tulot" />
         <CopyLinkButton />
       </Panel>
     </div>

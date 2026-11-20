@@ -6,12 +6,15 @@ import { GeneralSupportTab } from "@/components/calc/GeneralSupportTab";
 import { HousingTab } from "@/components/calc/HousingTab";
 import { ToolCards } from "@/components/calc/ToolCards";
 import { Faq } from "@/components/calc/Faq";
+import { CalculatorProvider, useCalculator } from "@/components/calc/CalculatorContext";
+import { validateCalculatorState } from "@/lib/calculator-state";
 
 const TITLE = "Sivutulo & Tuet -laskuri 2026 – Laske opintotuen ja yleistuen tulorajat";
 const DESCRIPTION =
   "Helppo suomalainen laskuri vuoden 2026 tulorajoille. Katso heti, paljonko voit tienata sivutuloja ennen kuin opintotuki, yleistuki tai asumistuki pienenee.";
 
 export const Route = createFileRoute("/")({
+  validateSearch: (search: Record<string, unknown>) => validateCalculatorState(search["data"]),
   head: () => ({
     meta: [
       { title: TITLE },
@@ -23,13 +26,13 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: TITLE },
       { property: "og:description", content: DESCRIPTION },
       { property: "og:type", content: "website" },
-      { property: "og:url", content: "/" },
+      { property: "og:url", content: "https://tuloetuus-laskuri.lovable.app" },
       { property: "og:locale", content: "fi_FI" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: TITLE },
       { name: "twitter:description", content: DESCRIPTION },
     ],
-    links: [{ rel: "canonical", href: "/" }],
+    links: [{ rel: "canonical", href: "https://tuloetuus-laskuri.lovable.app" }],
   }),
   component: Index,
 });
@@ -41,6 +44,16 @@ const TABS = [
 ];
 
 function Index() {
+  const search = Route.useSearch();
+  return (
+    <CalculatorProvider initial={search.data}>
+      <CalculatorPage invalid={search.invalid} />
+    </CalculatorProvider>
+  );
+}
+
+function CalculatorPage({ invalid }: { invalid: boolean }) {
+  const { state, update } = useCalculator();
   return (
     <div className="min-h-screen bg-background">
       <div className="border-b border-warning/30 bg-warning-soft">
@@ -66,8 +79,22 @@ function Index() {
           </p>
         </header>
 
-        <Tabs defaultValue="student">
-          <TabsList className="mb-5 grid h-auto w-full grid-cols-3 gap-1 rounded-2xl bg-secondary p-1.5">
+        {invalid && (
+          <p
+            role="alert"
+            className="mb-5 rounded-xl bg-warning-soft p-4 text-sm text-warning-foreground"
+          >
+            Jakolinkin tiedot ovat virheellisiä. Niitä ei käytetty; laskuri näyttää oletusarvot.
+          </p>
+        )}
+        <Tabs
+          value={state.tab}
+          onValueChange={(value) => {
+            if (value === "student" || value === "jobseeker" || value === "housing")
+              update("tab", value);
+          }}
+        >
+          <TabsList className="print:hidden mb-5 grid h-auto w-full grid-cols-3 gap-1 rounded-2xl bg-secondary p-1.5">
             {TABS.map((t) => (
               <TabsTrigger
                 key={t.value}

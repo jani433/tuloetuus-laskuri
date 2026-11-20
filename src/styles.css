@@ -125,7 +125,12 @@
   --sidebar-border: oklch(0.92 0.012 255);
   --sidebar-ring: oklch(0.6 0.14 158);
 
-  --gradient-hero: linear-gradient(160deg, oklch(0.31 0.09 258) 0%, oklch(0.26 0.08 252) 60%, oklch(0.3 0.08 220) 100%);
+  --gradient-hero: linear-gradient(
+    160deg,
+    oklch(0.31 0.09 258) 0%,
+    oklch(0.26 0.08 252) 60%,
+    oklch(0.3 0.08 220) 100%
+  );
   --gradient-meter: linear-gradient(90deg, oklch(0.6 0.14 158), oklch(0.66 0.13 170));
   --shadow-card: 0 1px 2px oklch(0.31 0.09 258 / 4%), 0 8px 24px -12px oklch(0.31 0.09 258 / 14%);
   --shadow-raised: 0 12px 32px -16px oklch(0.31 0.09 258 / 35%);
@@ -147,7 +152,7 @@
   h2,
   h3 {
     font-family: var(--font-display);
-    letter-spacing: -0.02em;
+    letter-spacing: 0;
   }
 }
 
@@ -163,7 +168,7 @@
   font-family: var(--font-display);
   font-variant-numeric: tabular-nums;
   font-weight: 800;
-  letter-spacing: -0.03em;
+  letter-spacing: 0;
   line-height: 1;
 }
 
@@ -180,4 +185,69 @@
 
 @utility animate-rise {
   animation: rise-in 0.35s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+@media print {
+  @page {
+    margin: 12mm;
+  }
+  body {
+    background: var(--background);
+  }
+  main {
+    max-width: none !important;
+    padding: 0 !important;
+    font-size: 10px;
+  }
+  [role="tabpanel"] > div {
+    display: grid !important;
+    grid-template-columns: 1fr 1.15fr !important;
+    align-items: start;
+  }
+  [role="tabpanel"] section {
+    padding: 10px !important;
+  }
+  [role="tabpanel"] p,
+  [role="tabpanel"] label,
+  [role="tabpanel"] dl {
+    font-size: 10px !important;
+  }
+  [role="tabpanel"] input,
+  [role="tabpanel"] select {
+    padding: 5px !important;
+    font-size: 12px !important;
+  }
+  header {
+    margin-bottom: 1rem !important;
+  }
+  #tools-title,
+  section[aria-labelledby="tools-title"],
+  section[aria-labelledby="faq-title"] {
+    display: none !important;
+  }
+  [role="tabpanel"][data-state="inactive"] {
+    display: none !important;
+  }
+  section {
+    box-shadow: none !important;
+    break-inside: auto;
+  }
+  h2,
+  h3,
+  dl,
+  [role="alert"] {
+    break-inside: avoid;
+  }
+  input,
+  select {
+    color: var(--foreground);
+  }
 }

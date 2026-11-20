@@ -1,6 +1,10 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { cva, type VariantProps } from "class-variance-authority";
-import { Check, Link2 } from "lucide-react";
+import { Check, Link2, Printer } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { parseNumericInput, MAX_MONEY, type NumericInput } from "@/lib/input";
+import { calculationShareUrl } from "@/lib/calculator-state";
+import { useCalculator } from "./CalculatorContext";
 import { cn } from "@/lib/utils";
 
 export function Panel({ className, children }: { className?: string; children: ReactNode }) {
@@ -24,7 +28,7 @@ export function PanelTitle({ step, children }: { step?: string; children: ReactN
   );
 }
 
-const statValue = cva("figure", {
+const statValue = cva("figure break-words", {
   variants: {
     tone: {
       default: "text-foreground",
@@ -58,7 +62,7 @@ export function Stat({
     <div className={className}>
       <div
         className={cn(
-          "mb-2 text-xs font-semibold uppercase tracking-wider",
+          "mb-2 text-xs font-semibold uppercase",
           tone === "inverse" ? "text-primary-foreground/70" : "text-muted-foreground",
         )}
       >
@@ -108,12 +112,6 @@ export function Callout({
   );
 }
 
-function parseNumber(raw: string) {
-  const cleaned = raw.replace(/\s/g, "").replace(",", ".").replace(/[^\d.-]/g, "");
-  const n = Number.parseFloat(cleaned);
-  return Number.isFinite(n) ? n : 0;
-}
-
 export function NumberField({
   label,
   value,
@@ -121,88 +119,153 @@ export function NumberField({
   suffix = "€",
   allowNegative = false,
   hint,
+  min,
+  max = MAX_MONEY,
+  integer = false,
 }: {
   label: string;
-  value: number;
-  onChange: (n: number) => void;
+  value: NumericInput;
+  onChange: (n: NumericInput) => void;
   suffix?: string;
   allowNegative?: boolean;
   hint?: ReactNode;
+  min?: number;
+  max?: number;
+  integer?: boolean;
 }) {
   const id = useId();
-  const [text, setText] = useState(String(value));
-
+  const [text, setText] = useState(value === null ? "" : String(value));
+  const last = useRef(value);
   useEffect(() => {
-    if (parseNumber(text) !== value) setText(String(value));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (value !== last.current) {
+      setText(value === null ? "" : String(value));
+      last.current = value;
+    }
   }, [value]);
-
+  const parsed = parseNumericInput(text, min ?? (allowNegative ? -MAX_MONEY : 0), max, integer);
   return (
     <div>
       <label htmlFor={id} className="mb-2 block text-sm font-semibold text-foreground">
         {label}
       </label>
-      <div className="flex items-center rounded-xl border border-input bg-background transition-shadow focus-within:border-ring focus-within:ring-4 focus-within:ring-ring/15">
+      <div className="flex items-center rounded-xl border border-input bg-background focus-within:border-ring focus-within:ring-4 focus-within:ring-ring/15">
         <input
           id={id}
-          inputMode={allowNegative ? "text" : "decimal"}
+          inputMode={integer ? "numeric" : "decimal"}
+          aria-invalid={!!parsed.error}
+          aria-describedby={`${id}-hint`}
           className="figure w-full min-w-0 bg-transparent px-4 py-3.5 text-2xl font-bold text-foreground outline-none"
           value={text}
           onChange={(e) => {
             const raw = e.target.value;
             setText(raw);
-            let n = parseNumber(raw);
-            if (!allowNegative) n = Math.abs(n);
-            onChange(n);
+            const next = parseNumericInput(
+              raw,
+              min ?? (allowNegative ? -MAX_MONEY : 0),
+              max,
+              integer,
+            ).value;
+            last.current = next;
+            onChange(next);
           }}
         />
         <span className="pr-4 text-base font-semibold text-muted-foreground">{suffix}</span>
       </div>
-      {hint && <p className="mt-2 text-xs text-muted-foreground">{hint}</p>}
+      <div id={`${id}-hint`}>
+        {parsed.error ? (
+          <p role="alert" className="mt-2 text-xs text-destructive">
+            {parsed.error}
+          </p>
+        ) : (
+          hint && <p className="mt-2 text-xs text-muted-foreground">{hint}</p>
+        )}
+      </div>
     </div>
   );
 }
 
 export function CopyLinkButton() {
-  const [copied, setCopied] = useState(false);
+  const { state } = useCalculator();
+  const [status, setStatus] = useState("");
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    return () => {
+  useEffect(
+    () => () => {
       if (timer.current) clearTimeout(timer.current);
-    };
-  }, []);
-
+    },
+    [],
+  );
   const copy = async () => {
-    const url = window.location.href;
     try {
-      await navigator.clipboard.writeText(url);
-    } catch {
-      const ta = document.createElement("textarea");
-      ta.value = url;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand("copy");
-      ta.remove();
+      const url = calculationShareUrl(window.location.href, state);
+      try {
+        await navigator.clipboard.writeText(url);
+      } catch {
+        const ta = document.createElement("textarea");
+        ta.value = url;
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+          if (!document.execCommand("copy"))
+            throw new Error("Kopiointi ei onnistunut. Tarkista selaimen leikepöytäoikeudet.");
+        } finally {
+          ta.remove();
+        }
+      }
+      setStatus("Linkki kopioitu!");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Kopiointi ei onnistunut.");
     }
-    setCopied(true);
     if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(() => setCopied(false), 2000);
+    timer.current = setTimeout(() => setStatus(""), 3000);
   };
-
   return (
-    <button
-      type="button"
-      onClick={copy}
-      className="mt-5 inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-primary"
-    >
-      {copied ? (
-        <Check className="h-3.5 w-3.5 text-success" />
-      ) : (
-        <Link2 className="h-3.5 w-3.5" />
-      )}
-      {copied ? "Linkki kopioitu!" : "Kopioi linkki laskuriin"}
-    </button>
+    <div className="mt-5 print:hidden">
+      <div className="flex flex-wrap gap-2">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={copy}
+          className="text-muted-foreground"
+        >
+          {status === "Linkki kopioitu!" ? <Check /> : <Link2 />}
+          {status === "Linkki kopioitu!" ? status : "Kopioi linkki laskuriin"}
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => window.print()}
+          className="text-muted-foreground"
+        >
+          <Printer />
+          Tulosta laskelma
+        </Button>
+      </div>
+      <p role="status" className="mt-1 text-xs text-muted-foreground">
+        {status !== "Linkki kopioitu!" ? status : ""}
+      </p>
+    </div>
+  );
+}
+
+export function EstimateNotice({ source }: { source: string }) {
+  return (
+    <p className="mt-5 text-xs leading-relaxed text-muted-foreground">
+      Laskennallinen arvio vuoden 2026 säännöillä, ei Kelan virallinen päätös.{" "}
+      <a href={source} target="_blank" rel="noopener noreferrer" className="underline">
+        Kelan laskentaperusteet
+      </a>
+      . Tarkista erityistilanteet OmaKelasta.
+    </p>
+  );
+}
+export function MissingResult() {
+  return (
+    <Callout tone="warning">
+      Täytä puuttuvat kentät ja korjaa virheelliset arvot. Arviota ei lasketa puutteellisista
+      tiedoista.
+    </Callout>
   );
 }
 

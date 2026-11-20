@@ -37,15 +37,17 @@ const FAQ: { q: string; a: ReactNode }[] = [
     a: (
       <>
         <p>
-          Yleistuessa ei ole suojaosaa, joten jokainen tienattu bruttoeuro pienentää tukea 50
-          senttiä. Esimerkiksi {euro(600)} sivutulolla {euro(GENERAL_SUPPORT_DEFAULT_MONTHLY)}{" "}
-          tuesta jää {euro(exampleGeneral.adjustedSupport)}, jolloin tulot ovat yhteensä{" "}
-          {euro(exampleGeneral.total)} ja jäät <b>{euro(exampleGeneral.gain)} plussalle</b>{" "}
-          kuukaudessa.
+          Yleistuen palkkatuloissa ei ole suojaosaa, joten jokainen palkkana tienattu bruttoeuro
+          pienentää tukea 50 senttiä. Esimerkiksi {euro(600)} sivutulolla{" "}
+          {euro(GENERAL_SUPPORT_DEFAULT_MONTHLY)} tuesta jää {euro(exampleGeneral.adjustedSupport)},
+          jolloin tulot ovat yhteensä {euro(exampleGeneral.total)} ja jäät{" "}
+          <b>{euro(exampleGeneral.gain)} plussalle</b> kuukaudessa.
         </p>
         <p>
-          Työnteko kannattaa siis aina. Kela saa palkkatiedot tulorekisteristä, mutta esimerkiksi
-          laskutus- ja yritystulot sekä ulkomailta maksetut tulot ilmoitetaan itse.
+          Muiden kuin palkkatulojen tarveharkinnassa on yhteinen 311 €/kk tuloraja, jonka
+          ylittävästä osasta vähennetään 50 %. Muut etuudet voivat vähentyä suoraan. Yleistuki alkoi
+          1.5.2026. Kela saa palkkatiedot tulorekisteristä, mutta esimerkiksi laskutus- ja
+          yritystulot sekä ulkomailta maksetut tulot ilmoitetaan itse.
         </p>
       </>
     ),
@@ -60,8 +62,8 @@ const FAQ: { q: string; a: ReactNode }[] = [
           veroilmoituksella OmaVerossa. Ennakkoveron voi hakea etukäteen, ettei jälkiveroja tule.
         </p>
         <p>
-          Myös Kelalle tulot pitää ilmoittaa itse OmaKelassa. Ne lasketaan opintotuen
-          vuosituloihin ja voivat pienentää yleistukea tai asumistukea. Säilytä maksutositteet ja
+          Myös Kelalle tulot pitää ilmoittaa itse OmaKelassa. Ne lasketaan opintotuen vuosituloihin
+          ja voivat pienentää yleistukea tai asumistukea. Säilytä maksutositteet ja
           valuuttamuunnokset.
         </p>
       </>
