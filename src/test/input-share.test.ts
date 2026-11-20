@@ -24,6 +24,37 @@ describe("Syötteiden validointi", () => {
   });
 });
 describe("Jaettu laskelma", () => {
+  it.each(["student", "jobseeker", "housing"] as const)(
+    "palauttaa %s-välilehden ja jokaisen syötteen",
+    (tab) => {
+      const state = structuredClone(DEFAULT_STATE);
+      state.tab = tab;
+      state.student.currentMonth = 11;
+      state.general.type = "mixed";
+      state.general.capital = 411.25;
+      state.housing.extraSpace = true;
+      state.housing.heatingRegion = "north";
+      const url = new URL(
+        calculationShareUrl(
+          "https://tuloetuus-laskuri.vercel.app/?data=null&invalid=true#ä&%",
+          state,
+        ),
+      );
+      expect([...url.searchParams.keys()]).toEqual(["data"]);
+      expect(
+        validateCalculatorState(JSON.parse(url.searchParams.get("data") ?? "null")).data,
+      ).toEqual(state);
+    },
+  );
+  it.each([
+    "ä&?=%#🚫",
+    "%7Bbroken",
+    "null",
+    { ...DEFAULT_STATE, version: 0 },
+    { ...DEFAULT_STATE, housing: {} },
+  ])("hylkää erikoismerkit, puutteet ja vanhan version", (raw) => {
+    expect(validateCalculatorState(raw).invalid).toBe(true);
+  });
   it("piilotetut tulot ja ristiriitaiset kuukaudet hylätään", () => {
     expect(
       validateCalculatorState({

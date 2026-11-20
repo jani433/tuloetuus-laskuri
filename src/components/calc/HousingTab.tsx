@@ -1,6 +1,6 @@
 import { BellRing } from "lucide-react";
 import { calcHousing, HOUSING_GROUPS, housingEstimate } from "@/lib/calc";
-import { euro, euroCents, signedEuro } from "@/lib/format";
+import { euroCents, signedEuro } from "@/lib/format";
 import { useCalculator } from "./CalculatorContext";
 import {
   Callout,
@@ -216,8 +216,8 @@ export function HousingTab() {
               >
                 {bars.map((b) => (
                   <div key={b.change} className="flex h-full min-w-0 flex-1 flex-col justify-end">
-                    <span className="mb-1 text-center text-[10px] font-semibold tabular-nums">
-                      {euro(b.result?.estimatedSupport ?? 0)}
+                    <span className="mb-1 min-h-7 text-center text-[10px] font-semibold tabular-nums">
+                      {euroCents(b.result?.estimatedSupport ?? 0)}
                     </span>
                     <div
                       className={`w-full rounded-t-md ${b.change === 0 ? "bg-primary" : b.change < 0 ? "bg-success/50" : "bg-warning/50"}`}
@@ -246,7 +246,7 @@ export function HousingTab() {
             </p>
           </div>
         )}
-        <EstimateNotice source="https://www.kela.fi/yleinen-asumistuki-maara-ja-maksaminen" />
+        <EstimateNotice source="https://www.kela.fi/yleinen-asumistuki" />
         <CopyLinkButton />
       </Panel>
     </div>

@@ -34,8 +34,8 @@ export function ToolCards() {
         Palveluita, jotka helpottavat sivutulojen kanssa toimimista.
       </p>
       <p className="mt-2 text-xs text-muted-foreground/80">
-        Osa linkeistä on kumppanuuslinkkejä, joiden kautta rahoitetaan laskurin
-        ylläpitoa ilman lisäkuluja sinulle.
+        Osa linkeistä on kumppanuuslinkkejä, joiden kautta rahoitetaan laskurin ylläpitoa ilman
+        lisäkuluja sinulle.
       </p>
       <div className="mt-5 grid gap-3 sm:grid-cols-3">
         {TOOLS.map((t) => (

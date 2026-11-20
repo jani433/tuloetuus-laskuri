@@ -147,13 +147,13 @@ export function GeneralSupportTab() {
               <div>
                 <div className="mb-1 flex justify-between gap-3 text-xs text-muted-foreground">
                   <span>Ilman lisätuloja (muut etuudet ennallaan)</span>
-                  <span>{euroCents(s.support ?? 0)}</span>
+                  <span>{euroCents(r.baseline)}</span>
                 </div>
                 <div className="h-7 overflow-hidden rounded-lg bg-secondary">
                   <div
                     className="h-full bg-primary/25"
                     style={{
-                      width: `${((s.support ?? 0) / Math.max(r.total, s.support ?? 0, 1)) * 100}%`,
+                      width: `${(r.baseline / Math.max(r.total, r.baseline, 1)) * 100}%`,
                     }}
                   />
                 </div>
@@ -167,13 +167,13 @@ export function GeneralSupportTab() {
                   <div
                     className="h-full bg-primary"
                     style={{
-                      width: `${(r.adjustedSupport / Math.max(r.total, s.support ?? 0, 1)) * 100}%`,
+                      width: `${(r.adjustedSupport / Math.max(r.total, r.baseline, 1)) * 100}%`,
                     }}
                   />
                   <div
                     className="h-full bg-success"
                     style={{
-                      width: `${((r.total - r.adjustedSupport) / Math.max(r.total, s.support ?? 0, 1)) * 100}%`,
+                      width: `${((r.total - r.adjustedSupport) / Math.max(r.total, r.baseline, 1)) * 100}%`,
                     }}
                   />
                 </div>

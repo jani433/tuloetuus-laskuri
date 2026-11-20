@@ -127,6 +127,7 @@ export function calcStudentAssessment(input: StudentInput) {
   return {
     ...base,
     annualIncome,
+    roomBeforeForecast: cents(base.limitWithMargin - earned),
     studyLimit,
     exceptionFits,
     noAid,
@@ -161,6 +162,7 @@ export interface GeneralSupportResult {
   reduction: number;
   total: number;
   gain: number;
+  baseline: number;
   keptPerEuro: number;
   wageReduction: number;
   meansReduction: number;
@@ -209,6 +211,7 @@ export function calcGeneralSupport(
     reduction,
     total,
     gain,
+    baseline: cents(baseline),
     keptPerEuro: wages > 0 ? gain / wages : 0.5,
     wageReduction,
     meansReduction,

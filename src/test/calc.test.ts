@@ -85,6 +85,20 @@ const housing = {
   group: "capital",
 };
 describe("Opintotuen korjattu tulovalvonta", () => {
+  it("erottaa 10 501 euron tulotilan ennen ennustetta ja 8 501 euroa sen jälkeen", () => {
+    const r = calcStudentAssessment(student);
+    expect(r?.limitWithMargin).toBe(20501);
+    expect(r?.annualIncome).toBe(12000);
+    expect(r?.roomBeforeForecast).toBe(10501);
+    expect(r?.remaining).toBe(8501);
+    expect(r?.recommendedMonthly).toBe(5250.5);
+  });
+  it("ennuste vähennetään kerran eikä muuta toteutuneisiin tuloihin perustuvaa kuukausisuositusta", () => {
+    const r = calcStudentAssessment({ ...student, future: 5000 });
+    expect(r?.roomBeforeForecast).toBe(10501);
+    expect(r?.remaining).toBe(5501);
+    expect(r?.recommendedMonthly).toBe(5250.5);
+  });
   it.each(Array.from({ length: 13 }, (_, i) => i))(
     "%i tukikuukauden tuloraja ja enimmäisperintä",
     (m) => {
@@ -148,6 +162,12 @@ describe("Opintotuen korjattu tulovalvonta", () => {
   });
 });
 describe("Yleistuen tulolajit", () => {
+  it("kuvaajan vertailutulo sisältää ennallaan pidetyt etuudet myös niiden ylittäessä täyden tuen", () => {
+    const r = calcGeneralSupport({ ...general, benefits: 1000, wages: 400 });
+    expect(r?.baseline).toBe(1000);
+    expect(r?.total).toBe(1400);
+    expect(r?.gain).toBe(400);
+  });
   it("ei tuloja: täysi keskimääräinen kuukausituki", () =>
     expect(calcGeneralSupport(general)?.adjustedSupport).toBe(800.02));
   it("palkka sovitellaan ilman 311 euron suojaa", () =>
@@ -188,6 +208,12 @@ describe("Yleistuen tulolajit", () => {
     ).toBe(0));
 });
 describe("Asumistuen kaava 2026", () => {
+  it("vastaa Kelan Turun kahden aikuisen 1 800 euron esimerkkiä", () => {
+    const r = calcHousing({ ...housing, adults: 2, income: 1800, rent: 950, group: "large" });
+    expect(r?.acceptedCosts).toBe(652);
+    expect(r?.deductible).toBe(472.5);
+    expect(r?.estimatedSupport).toBe(125.65);
+  });
   it.each([
     [1, 563],
     [2, 808],

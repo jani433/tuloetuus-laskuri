@@ -9,6 +9,7 @@ import { ToolCards } from "@/components/calc/ToolCards";
 import { Faq } from "@/components/calc/Faq";
 import { CalculatorProvider, useCalculator } from "@/components/calc/CalculatorContext";
 import { validateCalculatorState } from "@/lib/calculator-state";
+import { Button } from "@/components/ui/button";
 
 const TITLE = "Sivutulo & Tuet -laskuri 2026 – Laske opintotuen ja yleistuen tulorajat";
 const DESCRIPTION =
@@ -49,14 +50,12 @@ const TABS = [
 function Index() {
   const search = Route.useSearch();
   const navigate = useNavigate();
-  const key = "data" in search ? JSON.stringify(search.data ?? null) : "";
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const result = useMemo(
     () =>
       "data" in search
         ? validateCalculatorState(search.data ?? null)
         : { data: null, invalid: false },
-    [key],
+    [search],
   );
   const [invalid, setInvalid] = useState(false);
   useEffect(() => {
@@ -108,13 +107,14 @@ function CalculatorPage({ invalid, onDismiss }: { invalid: boolean; onDismiss: (
             <span className="block font-bold">Jakolinkki oli virheellinen tai vanhentunut.</span>
             Sen tietoja ei käytetty, ja virheelliset tiedot poistettiin osoitteesta. Laskuri näyttää
             oletusarvot.
-            <button
+            <Button
               type="button"
+              variant="link"
               onClick={onDismiss}
-              className="mt-2 block font-bold underline underline-offset-2"
+              className="mt-2 block h-auto p-0 font-bold text-warning-foreground underline underline-offset-2"
             >
               Jatka puhtaalla laskurilla
-            </button>
+            </Button>
           </p>
         )}
         <Tabs

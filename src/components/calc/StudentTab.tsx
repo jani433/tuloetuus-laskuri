@@ -166,11 +166,16 @@ export function StudentTab() {
                 />
                 {r.recommendedMonthly !== null && (
                   <Stat
-                    label="Tilaa tuleville tuloille"
-                    value={euro(Math.max(0, r.limitWithMargin - (s.earned ?? 0)))}
-                    hint={`Enintään ${euro(r.recommendedMonthly)}/kk, ${r.remainingMonths} kk jäljellä nykyinen kuukausi mukaan lukien. Ei oletusta tasaisesta tulokertymästä.`}
+                    label="Tulotila ennen tulevien tulojen ennustetta"
+                    value={euroCents(Math.max(0, r.roomBeforeForecast))}
+                    hint={`Vuosituloraja ylitysvaroineen − toteutuneet tulot. Enintään ${euroCents(r.recommendedMonthly)}/kk, ${r.remainingMonths} kk jäljellä nykyinen kuukausi mukaan lukien. Kuukausisuositus jakaa tämän tulotilan jäljellä oleville kuukausille; se sisältää myös ennustetut tulevat tulot.`}
                   />
                 )}
+                <Stat
+                  label="Tulotila ennustetun vuositulon jälkeen"
+                  value={euroCents(Math.max(0, r.remaining))}
+                  hint={`Vuosituloraja ylitysvaroineen − toteutuneet ja ennustetut tulevat tulot. ${r.remaining < 0 ? `Ennuste ylittää rajan ylitysvaroineen ${euroCents(-r.remaining)}.` : "Tämä on ennusteen lisäksi käytettävissä oleva tulotila."}`}
+                />
                 <Callout
                   tone={r.overLimit ? "warning" : "success"}
                   icon={
@@ -187,7 +192,7 @@ export function StudentTab() {
                       ? `Opiskeluajan tulot mahtuvat rajaan ${euro(r.studyLimit)}. Opintojen aloitus-/päättymisajankohta ja tulot on tarvittaessa osoitettava Kelalle.`
                       : r.overLimit
                         ? `Ylitys ${euroCents(r.overage)} kuuluu Kelan takaisinperintätaulukkoon (2 237 €:n rajat, ensimmäinen raja 374,01 €). Takaisinperintään lisätään 7,5 %. Vapaaehtoista palautusta tarvitaan arviolta ${r.voluntaryMonths} kk; palauta koko kuukauden opintoraha ja asumislisä viimeistään 30.4.2027.`
-                        : `Tulot eivät ylitä vuositulorajaa yli 374 eurolla. Tulotilaa on ${euroCents(r.remaining)} sallittu ylitys huomioiden.`}
+                        : `Tulot eivät ylitä vuositulorajaa yli 374 eurolla. Ennustetun vuositulon jälkeen tulotilaa on ${euroCents(r.remaining)} sallittu ylitys huomioiden.`}
                 </Callout>
                 <p className="text-xs text-muted-foreground">
                   Takaisinperinnän euromäärää ei lasketa ilman maksettujen tukikuukausien
@@ -198,7 +203,7 @@ export function StudentTab() {
             )}
           </div>
         )}
-        <EstimateNotice source="https://www.kela.fi/opintotuki-omat-tulot" />
+        <EstimateNotice source="https://www.kela.fi/tulojen-vaikutus-korkeakoulussa" />
         <CopyLinkButton />
       </Panel>
     </div>
