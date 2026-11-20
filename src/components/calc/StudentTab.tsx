@@ -10,7 +10,7 @@ import {
 } from "@/lib/calc";
 import { euro, num } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { Callout, NumberField, Panel, PanelTitle, SliderHeader, Stat } from "./parts";
+import { Callout, CopyLinkButton, NumberField, Panel, PanelTitle, SliderHeader, Stat } from "./parts";
 
 export function StudentTab() {
   const [months, setMonths] = useState(9);
@@ -165,6 +165,8 @@ export function StudentTab() {
             asumislisää ei lasketa tuloksi.
           </p>
         </div>
+
+        <CopyLinkButton />
       </Panel>
     </div>
   );

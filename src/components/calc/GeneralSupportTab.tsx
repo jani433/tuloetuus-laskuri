@@ -3,7 +3,7 @@ import { Info, TrendingUp } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { GENERAL_SUPPORT_DAILY, GENERAL_SUPPORT_DEFAULT_MONTHLY, calcGeneralSupport } from "@/lib/calc";
 import { euro, euroCents, signedEuro } from "@/lib/format";
-import { Callout, NumberField, Panel, PanelTitle, SliderHeader, Stat } from "./parts";
+import { Callout, CopyLinkButton, NumberField, Panel, PanelTitle, SliderHeader, Stat } from "./parts";
 
 export function GeneralSupportTab() {
   const [support, setSupport] = useState(GENERAL_SUPPORT_DEFAULT_MONTHLY);
@@ -133,6 +133,8 @@ export function GeneralSupportTab() {
             palkkatietojen perusteella.
           </p>
         </div>
+
+        <CopyLinkButton />
       </Panel>
     </div>
   );

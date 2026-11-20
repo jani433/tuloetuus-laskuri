@@ -8,7 +8,7 @@ import {
 } from "@/lib/calc";
 import { euro, signedEuro } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { Callout, NumberField, Panel, PanelTitle, Stat } from "./parts";
+import { Callout, CopyLinkButton, NumberField, Panel, PanelTitle, Stat } from "./parts";
 
 const STEPS = [0, 100, 200, 300, 400, 500, 600, 700, 800];
 
@@ -139,6 +139,8 @@ export function HousingTab() {
           Havainnollistus: asumistuki pienenee noin 29 senttiä jokaista lisäeuroa kohden, 50 €:n
           portain. Todellinen määrä riippuu asumismenoista, kotitalouden koosta ja kunnasta.
         </p>
+
+        <CopyLinkButton />
       </Panel>
     </div>
   );
