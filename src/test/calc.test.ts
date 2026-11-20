@@ -208,6 +208,17 @@ describe("Yleistuen tulolajit", () => {
     ).toBe(0));
 });
 describe("Asumistuen kaava 2026", () => {
+  it("Kelan Pekan 15 000 euron sijoituksesta tulee 83,33 euron kuukausitulo", () => {
+    expect(calcHousing({ ...housing, assets: 15000 })?.assetIncome).toBe(83.33);
+  });
+  it("Kelan Maijan Helsingin 800 euron vuokrasta hyväksytään 563 euroa", () => {
+    expect(calcHousing({ ...housing, rent: 800 })?.acceptedCosts).toBe(563);
+  });
+  it("Kelan Tommin ja Pauliinan Turun 750 euron vuokrasta hyväksytään 652 euroa", () => {
+    expect(calcHousing({ ...housing, adults: 2, rent: 750, group: "large" })?.acceptedCosts).toBe(
+      652,
+    );
+  });
   it("vastaa Kelan Turun kahden aikuisen 1 800 euron esimerkkiä", () => {
     const r = calcHousing({ ...housing, adults: 2, income: 1800, rent: 950, group: "large" });
     expect(r?.acceptedCosts).toBe(652);

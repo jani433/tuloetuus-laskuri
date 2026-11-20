@@ -156,7 +156,10 @@ function CalculatorPage({ invalid, onDismiss }: { invalid: boolean; onDismiss: (
 
         <footer className="mt-14 border-t pt-6 text-xs leading-relaxed text-muted-foreground">
           Laskuri on suuntaa-antava eikä korvaa Kelan virallista päätöstä. Kaikki laskenta tapahtuu
-          selaimessasi – tietojasi ei tallenneta.
+          selaimessasi. Syötteitä ei tallenneta laskurin tietokantaan eikä lähetetä
+          laskentapalveluun. Jakolinkki sisältää kaikkien välilehtien syötteet: linkin vastaanottaja
+          voi nähdä ne, ja linkkiä avattaessa osoite voi tallentua selaimen historiaan ja sivuston
+          palvelinlokeihin. Älä jaa linkkiä, jos et halua jakaa sen sisältämiä taloustietoja.
         </footer>
       </main>
     </div>

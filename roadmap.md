@@ -12,3 +12,9 @@
 - [x] Tarkista Vercel-metatiedot, hakukonerajoitukset ja Kelan lähteet.
 - [x] Testaa kolme laskuria, A4-tulostus ja mobiilinäkymät.
 - [x] Suorita testit ja lint, tarkista automaattinen rakennustulos ja dokumentoi rajaukset. Ei automaattijulkaisua.
+
+## Rajattu loppukorjaus
+- [x] Varmista nykyiset tulotilat, kuukausisuositus ja jakolinkkien palautuminen.
+- [x] Täsmennä yleistuen tukemattomat erityistilanteet ja testaa Kelan asumistukiesimerkit.
+- [x] Korjaa tietosuojateksti ja estä tarpeettomat ulkoiset pyynnöt sekä tietojen vuoto virheraportointiin.
+- [x] Toista testit, lint, automaattinen rakennustarkistus sekä tulostus-, mobiili- ja virhesivutestit; raportoi ilman julkaisua.

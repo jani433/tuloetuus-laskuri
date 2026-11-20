@@ -25,13 +25,17 @@ declare global {
 }
 
 export function reportLovableError(error: unknown, context: Record<string, unknown> = {}) {
-  if (typeof window === "undefined") return;
+  // Production calculators do not report exceptions to external services.
+  // Even preview diagnostics must not include snapshots, raw errors or arbitrary context.
+  if (!import.meta.env.DEV || typeof window === "undefined") return;
+  void error;
+  void context;
+  const safeError = new Error("Laskurin näkymässä tapahtui virhe.");
   window.__lovableEvents?.captureException?.(
-    error,
+    safeError,
     {
       source: "react_error_boundary",
-      route: window.location.pathname,
-      ...context,
+      route: "/",
     },
     {
       mechanism: "react_error_boundary",
@@ -42,29 +46,8 @@ export function reportLovableError(error: unknown, context: Record<string, unkno
   // Prod React does not rethrow boundary-caught errors to window.onerror, so the
   // editor's telemetry never sees them. Forward to lovable.js's reporting hook,
   // which is present only inside the editor preview.
-  const stack = error instanceof Error ? error.stack : undefined;
   window.__lovableReportRuntimeError?.({
-    message: describeThrown(error),
-    ...(stack !== undefined && { stack }),
-    filename: window.location.pathname,
+    message: safeError.message,
+    filename: "/",
   });
-}
-
-const MAX_SERIALIZED_LENGTH = 2000;
-
-// Loaders and server fns throw raw Responses and plain objects (a Supabase
-// `{ message, code, details }`), which String() reduces to "[object ...]".
-function describeThrown(error: unknown): string {
-  if (error instanceof Response) {
-    return `Response ${error.status}${error.url ? ` at ${error.url}` : ""}`;
-  }
-  if (error instanceof Error) return error.message;
-  if (typeof error === "string") return error;
-  const { message } = (error ?? {}) as { message?: unknown };
-  if (typeof message === "string" && message.length > 0) return message;
-  try {
-    return JSON.stringify(error)?.slice(0, MAX_SERIALIZED_LENGTH) ?? String(error);
-  } catch {
-    return String(error);
-  }
 }

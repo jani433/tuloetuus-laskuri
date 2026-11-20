@@ -34,3 +34,4 @@ use the editor.
 - No backend: everything runs client-side in the browser, because the app stores no user data.
 - Keep calculator inputs in a shared React context and validate versioned URL snapshots against a strict allowlist; sharing must reproduce all calculator inputs without storing user data.
 - Use nullable numeric inputs and suppress estimates on invalid, missing or unsupported data; never silently coerce missing financial information to zero.
+- Serve fonts locally, suppress referrers, and disable application exception reporting in production; preview diagnostics must exclude raw errors and calculator state to avoid disclosing financial inputs.

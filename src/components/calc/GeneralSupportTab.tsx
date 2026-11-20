@@ -103,8 +103,13 @@ export function GeneralSupportTab() {
               className="mt-1"
             />
             Erityistilanne: asun vanhempien luona, osallistun työllistymistä edistävään palveluun,
-            saan eläkettä tai etuuden vaikutus on epäselvä
+            saan eläkettä, olen yrittäjä tai etuuden vaikutus tai työaika on epäselvä
           </label>
+          <p className="text-xs text-muted-foreground">
+            Laskuri ei ratkaise oikeutta yleistukeen, työssäoloehtoa, odotus- tai karenssiaikaa,
+            yritystoiminnan päätoimisuutta eikä työajan sovitteluedellytyksiä. Valitse
+            erityistilanne, jos jokin näistä on epäselvä; silloin euromääräistä arviota ei anneta.
+          </p>
           <p className="text-xs text-muted-foreground">
             Yleistuki on voimassa 1.5.2026 alkaen. Palkka sovitellaan maksujakson mukaan.
             Säännölliset pääoma- ja muut tarveharkintatulot arvioidaan kuukausituloiksi,
@@ -120,6 +125,12 @@ export function GeneralSupportTab() {
             <Callout tone="warning">
               Erityistilanne vaatii Kelan arvion. Vanhempien tulot, palvelujaksot ja etuuksien tai
               eläkkeen laji voivat muuttaa sääntöjä. Näillä tiedoilla ei anneta euromäärää.
+              Vanhempien tulot voivat vaikuttaa, jos työssäoloehto ei täyty; 35 %:n vähimmäismäärä
+              koskee vain tätä sääntöä. Työllistymistä edistävän palvelun aikana muut kuin
+              palkkatulot eivät pienennä tukea tarveharkinnassa. Osittaisen varhennetun
+              vanhuuseläkkeen vaikutus riippuu päätöspäivästä: ennen 1.5.2026 myönnetty eläke on
+              Kelan ohjeen mukaan rajattu pois, 1.5.2026 tai myöhemmin myönnetty voi vaikuttaa.
+              Näitä tilanteita ja palvelujaksoja ei lasketa tällä laskurilla.
             </Callout>
           ) : (
             <MissingResult />

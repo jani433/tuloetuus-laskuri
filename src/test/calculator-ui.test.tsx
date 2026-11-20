@@ -10,6 +10,18 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 describe("Laskurien syötteet ja tulokset", () => {
+  it("yleistuen erityistilanne estää euromääräisen arvion ja säilyy jakotiedoissa", () => {
+    render(
+      <CalculatorProvider initial={DEFAULT_STATE}>
+        <GeneralSupportTab />
+      </CalculatorProvider>,
+    );
+    fireEvent.click(screen.getByRole("checkbox"));
+    expect(screen.queryByText("500,02 €")).not.toBeInTheDocument();
+    const state = structuredClone(DEFAULT_STATE);
+    state.general.special = true;
+    expect(validateCalculatorState(state).data?.general.special).toBe(true);
+  });
   it("opiskelijan toteutunut tulo päivittyy ja virhe estää laskelman", () => {
     render(
       <CalculatorProvider initial={DEFAULT_STATE}>
