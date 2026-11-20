@@ -33,6 +33,10 @@ export function ToolCards() {
       <p className="mt-1 text-sm text-muted-foreground">
         Palveluita, jotka helpottavat sivutulojen kanssa toimimista.
       </p>
+      <p className="mt-2 text-xs text-muted-foreground/80">
+        Osa linkeistä on kumppanuuslinkkejä, joiden kautta rahoitetaan laskurin
+        ylläpitoa ilman lisäkuluja sinulle.
+      </p>
       <div className="mt-5 grid gap-3 sm:grid-cols-3">
         {TOOLS.map((t) => (
           <a
