@@ -156,6 +156,12 @@ export function validateCalculatorState(input: unknown): {
   }
   return { data: cleaned, invalid: false };
 }
+export function validateCalculatorSearch(search: Record<string, unknown>) {
+  if (Object.hasOwn(search, "invalid")) return { data: null, invalid: true };
+  return Object.hasOwn(search, "data")
+    ? validateCalculatorState(search["data"] ?? null)
+    : { data: null, invalid: false };
+}
 export function calculationShareUrl(base: string, state: CalculatorState) {
   const validated = validateCalculatorState(state);
   if (!validated.data)

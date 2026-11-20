@@ -164,18 +164,30 @@ export function StudentTab() {
                   }
                   tone={r.overLimit ? "danger" : "success"}
                 />
-                {r.recommendedMonthly !== null && (
+                <Stat
+                  label="Tulotilaa jäljellä toteutuneiden tulojen jälkeen"
+                  value={euroCents(r.roomBeforeForecast)}
+                  hint="Vuosituloraja ylitysvaroineen − toteutuneet tulot, vähintään 0 €. Sisältää myös jo ennustetut tulevat tulot."
+                />
+                <Stat
+                  label="Tulotilaa jäljellä myös arvioitujen tulevien tulojen jälkeen"
+                  value={euroCents(r.roomAfterForecast)}
+                  hint="Vuosituloraja ylitysvaroineen − toteutuneet tulot − arvioidut tulevat tulot, vähintään 0 €. Tämä summa on ansaittavissa ennusteen lisäksi."
+                />
+                {r.overageWithMargin > 0 && (
                   <Stat
-                    label="Tulotila ennen tulevien tulojen ennustetta"
-                    value={euroCents(Math.max(0, r.roomBeforeForecast))}
-                    hint={`Vuosituloraja ylitysvaroineen − toteutuneet tulot. Enintään ${euroCents(r.recommendedMonthly)}/kk, ${r.remainingMonths} kk jäljellä nykyinen kuukausi mukaan lukien. Kuukausisuositus jakaa tämän tulotilan jäljellä oleville kuukausille; se sisältää myös ennustetut tulevat tulot.`}
+                    label="Arvioidun vuositulon ylitys sallittu ylitys huomioiden"
+                    value={euroCents(r.overageWithMargin)}
+                    tone="danger"
                   />
                 )}
-                <Stat
-                  label="Tulotila ennustetun vuositulon jälkeen"
-                  value={euroCents(Math.max(0, r.remaining))}
-                  hint={`Vuosituloraja ylitysvaroineen − toteutuneet ja ennustetut tulevat tulot. ${r.remaining < 0 ? `Ennuste ylittää rajan ylitysvaroineen ${euroCents(-r.remaining)}.` : "Tämä on ennusteen lisäksi käytettävissä oleva tulotila."}`}
-                />
+                {r.recommendedMonthly !== null && (
+                  <Stat
+                    label="Kaikkien tulevien tulojen kuukausibudjetti"
+                    value={`${euroCents(r.recommendedMonthly)}/kk`}
+                    hint={`${euroCents(r.roomBeforeForecast)} ÷ ${r.remainingMonths} kk. Valittu kuukausi sisältyy jäljellä oleviin kuukausiin. Budjetti sisältää jo ennustetut tulevat tulot; se ei ole ennusteen lisäksi ansaittava summa.`}
+                  />
+                )}
                 <Callout
                   tone={r.overLimit ? "warning" : "success"}
                   icon={

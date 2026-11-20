@@ -8,7 +8,7 @@ import { HousingTab } from "@/components/calc/HousingTab";
 import { ToolCards } from "@/components/calc/ToolCards";
 import { Faq } from "@/components/calc/Faq";
 import { CalculatorProvider, useCalculator } from "@/components/calc/CalculatorContext";
-import { validateCalculatorState } from "@/lib/calculator-state";
+import { validateCalculatorSearch } from "@/lib/calculator-state";
 import { Button } from "@/components/ui/button";
 
 const TITLE = "Sivutulo & Tuet -laskuri 2026 – Laske opintotuen ja yleistuen tulorajat";
@@ -17,8 +17,10 @@ const DESCRIPTION =
 
 export const Route = createFileRoute("/")({
   // Keep only the raw snapshot in the URL; validity is derived, never written back.
-  validateSearch: (search: Record<string, unknown>): { data?: unknown } =>
-    "data" in search ? { data: search["data"] } : {},
+  validateSearch: (search: Record<string, unknown>): { data?: unknown; invalid?: unknown } => ({
+    ...(Object.hasOwn(search, "data") ? { data: search["data"] } : {}),
+    ...(Object.hasOwn(search, "invalid") ? { invalid: search["invalid"] } : {}),
+  }),
   head: () => ({
     meta: [
       { title: TITLE },
@@ -50,13 +52,7 @@ const TABS = [
 function Index() {
   const search = Route.useSearch();
   const navigate = useNavigate();
-  const result = useMemo(
-    () =>
-      "data" in search
-        ? validateCalculatorState(search.data ?? null)
-        : { data: null, invalid: false },
-    [search],
-  );
+  const result = useMemo(() => validateCalculatorSearch(search), [search]);
   const [invalid, setInvalid] = useState(false);
   useEffect(() => {
     if (result.invalid) {

@@ -127,7 +127,9 @@ export function calcStudentAssessment(input: StudentInput) {
   return {
     ...base,
     annualIncome,
-    roomBeforeForecast: cents(base.limitWithMargin - earned),
+    roomBeforeForecast: Math.max(0, cents(base.limitWithMargin - earned)),
+    roomAfterForecast: Math.max(0, base.remaining),
+    overageWithMargin: Math.max(0, -base.remaining),
     studyLimit,
     exceptionFits,
     noAid,

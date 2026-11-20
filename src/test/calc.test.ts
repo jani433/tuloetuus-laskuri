@@ -91,6 +91,8 @@ describe("Opintotuen korjattu tulovalvonta", () => {
     expect(r?.annualIncome).toBe(12000);
     expect(r?.roomBeforeForecast).toBe(10501);
     expect(r?.remaining).toBe(8501);
+    expect(r?.roomAfterForecast).toBe(8501);
+    expect(r?.overageWithMargin).toBe(0);
     expect(r?.recommendedMonthly).toBe(5250.5);
   });
   it("ennuste vähennetään kerran eikä muuta toteutuneisiin tuloihin perustuvaa kuukausisuositusta", () => {
@@ -98,6 +100,30 @@ describe("Opintotuen korjattu tulovalvonta", () => {
     expect(r?.roomBeforeForecast).toBe(10501);
     expect(r?.remaining).toBe(5501);
     expect(r?.recommendedMonthly).toBe(5250.5);
+  });
+  it("nollaan rajattu tulotila ei piilota 1 499 euron ennusteylitystä", () => {
+    const r = calcStudentAssessment({ ...student, earned: 20000, future: 2000 });
+    expect(r?.roomBeforeForecast).toBe(501);
+    expect(r?.roomAfterForecast).toBe(0);
+    expect(r?.overageWithMargin).toBe(1499);
+  });
+  it("toteutuneiden tulojen ylitys rajaa molemmat tulotilat nollaan", () => {
+    const r = calcStudentAssessment({ ...student, earned: 21000, future: 2000 });
+    expect(r?.roomBeforeForecast).toBe(0);
+    expect(r?.roomAfterForecast).toBe(0);
+    expect(r?.overageWithMargin).toBe(2499);
+    expect(r?.recommendedMonthly).toBe(0);
+  });
+  it("joulukuun budjetti kattaa yhden kuukauden eikä jaa nollalla", () => {
+    const r = calcStudentAssessment({ ...student, currentMonth: 12 });
+    expect(r?.remainingMonths).toBe(1);
+    expect(r?.recommendedMonthly).toBe(10501);
+    expect(calcStudentAssessment({ ...student, currentMonth: 13 })).toBeNull();
+  });
+  it("tammikuun kaikkien tulevien tulojen budjetti on 10 501 / 12", () => {
+    const r = calcStudentAssessment({ ...student, currentMonth: 1 });
+    expect(r?.remainingMonths).toBe(12);
+    expect(r?.recommendedMonthly).toBeCloseTo(875.083333);
   });
   it.each(Array.from({ length: 13 }, (_, i) => i))(
     "%i tukikuukauden tuloraja ja enimmäisperintä",

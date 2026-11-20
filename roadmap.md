@@ -18,3 +18,9 @@
 - [x] Täsmennä yleistuen tukemattomat erityistilanteet ja testaa Kelan asumistukiesimerkit.
 - [x] Korjaa tietosuojateksti ja estä tarpeettomat ulkoiset pyynnöt sekä tietojen vuoto virheraportointiin.
 - [x] Toista testit, lint, automaattinen rakennustarkistus sekä tulostus-, mobiili- ja virhesivutestit; raportoi ilman julkaisua.
+
+## Liitteen loppukorjaus
+- [x] Täsmennä kaksi tulotilariviä ja kuukausibudjetti ilman etuuskaavamuutoksia.
+- [x] Torju virheelliset jakoparametrit ja testaa palautuminen.
+- [x] Tarkista Kelan lähteet, mobiili, tulostus, saavutettavuus ja metatiedot.
+- [x] Suorita testit ja lint, tarkista automaattinen rakennus ja raportoi ilman julkaisua.

@@ -4,6 +4,7 @@ import {
   DEFAULT_STATE,
   calculationShareUrl,
   validateCalculatorState,
+  validateCalculatorSearch,
 } from "@/lib/calculator-state";
 describe("Syötteiden validointi", () => {
   it("tyhjä ei ole nolla", () => expect(parseNumericInput("").value).toBeNull());
@@ -24,6 +25,16 @@ describe("Syötteiden validointi", () => {
   });
 });
 describe("Jaettu laskelma", () => {
+  it.each([null, undefined, "null", "undefined", "NaN", NaN])(
+    "torjuu virheellisen data-parametrin %s myös sen ollessa määrittelemätön",
+    (data) => expect(validateCalculatorSearch({ data }).invalid).toBe(true),
+  );
+  it("torjuu invalid=true-parametrin myös ilman data-parametria", () => {
+    expect(validateCalculatorSearch({ invalid: true }).invalid).toBe(true);
+    expect(validateCalculatorSearch({ data: DEFAULT_STATE, invalid: true }).invalid).toBe(true);
+    expect(validateCalculatorSearch({}).invalid).toBe(false);
+    expect(validateCalculatorSearch({ data: DEFAULT_STATE }).data).toEqual(DEFAULT_STATE);
+  });
   it.each(["student", "jobseeker", "housing"] as const)(
     "palauttaa %s-välilehden ja jokaisen syötteen",
     (tab) => {
